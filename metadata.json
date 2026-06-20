@@ -1,0 +1,6 @@
+{
+  "name": "Center Ônibus - Gestão de Garantias",
+  "description": "Sistema de pós-vendas e gestão de garantias, devoluções, fretes e ocorrências.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
