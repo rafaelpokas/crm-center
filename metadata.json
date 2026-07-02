@@ -1,6 +1,4 @@
 {
-  "name": "Center Ônibus - Gestão de Garantias",
-  "description": "Sistema de pós-vendas e gestão de garantias, devoluções, fretes e ocorrências.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "name": "CRM Center - Gestão de Garantias",
+  "description": "Protótipo de sistema de pós-vendas para gestão de garantias, devoluções e ocorrências - TCC FGV."
 }

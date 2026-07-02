@@ -6,3 +6,11 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Artefatos locais / temporários
+.node-local/
+_docx_extract/
+_docx_text.txt
+_extract.ps1
+install-global-node.ps1
+start-dev.ps1

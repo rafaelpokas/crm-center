@@ -1,20 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# CRM Center — Gestão de Garantias no Pós-Vendas
 
-# Run and deploy your AI Studio app
+Protótipo de sistema de SAC para gestão de garantias, devoluções e ocorrências de frete,
+desenvolvido como parte do TCC (FGV MBA) sobre padronização de processos de pós-vendas
+na Auto Peças Center Ônibus.
 
-This contains everything you need to run your app locally.
+## Executar localmente
 
-View your app in AI Studio: https://ai.studio/apps/f9ceeab2-cedd-46d9-9293-eb1547647941
+**Pré-requisitos:** Node.js
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
+1. Instale as dependências:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Rode a aplicação:
    `npm run dev`
+
+## Build de produção
+
+`npm run build`
+
+Os arquivos estáticos são gerados em `dist/`.
+
+## Deploy (Netlify)
+
+O arquivo `netlify.toml` já configura o build (`npm run build`), o diretório de
+publicação (`dist`) e o redirecionamento de SPA. Basta conectar o repositório à Netlify.

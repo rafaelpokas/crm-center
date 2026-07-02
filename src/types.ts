@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 export type TipoOcorrencia = 'GARANTIA' | 'DEVOLUÇÃO' | 'FRETE';
 
 export type StatusProtocolo = 'Novo' | 'Em Análise' | 'Aguardando Peça' | 'Aprovado' | 'Reprovado';

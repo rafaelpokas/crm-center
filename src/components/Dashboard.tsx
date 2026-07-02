@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React from 'react';
 import { 
   CheckCircle2, 
@@ -10,10 +5,11 @@ import {
   AlertTriangle, 
   CheckSquare, 
   TrendingUp, 
-  TrendingDown, 
+  TrendingDown,
   ChevronRight,
   HelpCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  DollarSign
 } from 'lucide-react';
 import { Protocolo } from '../types';
 
@@ -49,6 +45,26 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
   const percentEmAnalise = countActive > 0
     ? Math.round((countEmAnalise / countActive) * 100)
     : 65;
+
+  // Ciclo Médio de Garantia (dias) — média entre a abertura e o retorno ao cliente (Tabela 2 do TCC)
+  const cycleDurations = protocols
+    .filter(p => p.analise_e_status.data_retorno_cliente)
+    .map(p => {
+      const abertura = new Date(p.data_solicitacao).getTime();
+      const retorno = new Date(p.analise_e_status.data_retorno_cliente as string).getTime();
+      return (retorno - abertura) / (1000 * 60 * 60 * 24);
+    })
+    .filter(dias => dias >= 0);
+  const cicloMedio = cycleDurations.length > 0
+    ? (cycleDurations.reduce((a, b) => a + b, 0) / cycleDurations.length).toFixed(1)
+    : '0.0';
+
+  // Custo da Não-Qualidade — soma dos valores envolvidos nas ocorrências
+  const custoNaoQualidade = protocols.reduce((sum, p) => sum + (p.dados_fiscais.valor_envolvido || 0), 0);
+  const custoFormatado = custoNaoQualidade.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
 
   // 2. Classifications Chart Calculation (%)
   const countGarantia = protocols.filter(p => p.tipo_ocorrencia === 'GARANTIA').length;
@@ -110,12 +126,19 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
   // Bar chart state hover values
   const [hoveredBar, setHoveredBar] = React.useState<number | null>(null);
 
-  const barData = [
-    { week: 'Sem 1', count: 120, colorClass: 'bg-slate-300' },
-    { week: 'Sem 2', count: 180, colorClass: 'bg-slate-900' },
-    { week: 'Sem 3', count: 90, colorClass: 'bg-slate-200' },
-    { week: 'Sem 4', count: 150, colorClass: 'bg-sky-200' },
-  ];
+  // Fluxo mensal derivado dos protocolos reais (últimos 4 meses com registros)
+  const barColors = ['bg-slate-300', 'bg-slate-900', 'bg-slate-200', 'bg-sky-200'];
+  const monthlyMap = new Map<string, number>();
+  [...protocols]
+    .sort((a, b) => new Date(a.data_solicitacao).getTime() - new Date(b.data_solicitacao).getTime())
+    .forEach(p => {
+      const key = new Date(p.data_solicitacao).toLocaleDateString('pt-BR', { month: 'short' });
+      monthlyMap.set(key, (monthlyMap.get(key) || 0) + 1);
+    });
+  const barData = Array.from(monthlyMap.entries())
+    .slice(-4)
+    .map(([week, count], index) => ({ week, count, colorClass: barColors[index % barColors.length] }));
+  const maxBarCount = Math.max(...barData.map(b => b.count), 1);
 
   return (
     <div className="space-y-10 animate-fade-in">
@@ -134,7 +157,7 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {/* KPI 1 */}
         <div className="bg-white rounded-xl p-6 card-shadow flex flex-col justify-between transition-all duration-200 hover:-translate-y-1">
           <div className="flex justify-between items-start mb-4">
@@ -156,16 +179,16 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
         <div className="bg-white rounded-xl p-6 card-shadow flex flex-col justify-between transition-all duration-200 hover:-translate-y-1">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="font-sans text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">SLA Médio</p>
-              <h3 className="font-display text-3xl font-extrabold text-slate-900">4.2 <span className="text-sm font-medium text-slate-400">dias</span></h3>
+              <p className="font-sans text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ciclo Médio de Garantia</p>
+              <h3 className="font-display text-3xl font-extrabold text-slate-900">{cicloMedio} <span className="text-sm font-medium text-slate-400">dias</span></h3>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700">
               <Timer size={18} />
             </div>
           </div>
-          <div className="flex items-center gap-1 font-sans text-xs font-semibold text-emerald-600">
+          <div className="flex items-center gap-1 font-sans text-xs font-semibold text-slate-500">
             <TrendingDown size={14} />
-            <span>-0.8 dias vs meta</span>
+            <span>Da abertura ao retorno ao cliente</span>
           </div>
         </div>
 
@@ -196,13 +219,27 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
           <div className="flex justify-between items-start mb-4">
             <div>
               <p className="font-sans text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Resolvido</p>
-              <h3 className="font-display text-3xl font-extrabold text-slate-900">{1492 + countResolved}</h3>
+              <h3 className="font-display text-3xl font-extrabold text-slate-900">{countResolved}</h3>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700">
               <CheckSquare size={18} />
             </div>
           </div>
-          <p className="font-sans text-[10px] font-semibold text-slate-400">Previsões e Acumulado do ano (YTD)</p>
+          <p className="font-sans text-[10px] font-semibold text-slate-400">Protocolos aprovados ou reprovados</p>
+        </div>
+
+        {/* KPI 5 */}
+        <div className="bg-white rounded-xl p-6 card-shadow flex flex-col justify-between transition-all duration-200 hover:-translate-y-1">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="font-sans text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Custo da Não-Qualidade</p>
+              <h3 className="font-display text-2xl font-extrabold text-slate-900">{custoFormatado}</h3>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700">
+              <DollarSign size={18} />
+            </div>
+          </div>
+          <p className="font-sans text-[10px] font-semibold text-slate-400">Valor total envolvido nas ocorrências</p>
         </div>
       </div>
 
@@ -213,10 +250,10 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
           <div className="flex justify-between items-center mb-8">
             <div>
               <h3 className="font-display text-base font-bold text-slate-900">Fluxo de Protocolos</h3>
-              <p className="font-sans text-xs text-slate-400 mt-0.5">Distribuição semanal de entradas triadas</p>
+              <p className="font-sans text-xs text-slate-400 mt-0.5">Distribuição mensal de entradas triadas</p>
             </div>
             <span className="font-sans text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">
-              Últimos 30 dias
+              Últimos meses
             </span>
           </div>
 
@@ -232,8 +269,8 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
 
             {/* Bars */}
             {barData.map((bar, index) => {
-              // Convert count to percentage height (assuming max 200)
-              const heightPercent = `${(bar.count / 200) * 100}%`;
+              // Convert count to percentage height relative to the busiest month
+              const heightPercent = `${(bar.count / maxBarCount) * 100}%`;
               const isHovered = hoveredBar === index;
 
               return (
