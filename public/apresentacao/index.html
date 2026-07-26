@@ -893,15 +893,15 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
 </section>
 
 <!-- 14 · PROJETO PRONTO -->
-<section class="sec sec--tint" data-title="O Projeto Pronto">
+<section class="sec sec--tint" data-title="O Projeto em Implementação">
   <div class="bgfx" data-circuit></div>
   <div class="fgvmark"><i class="im im-fgv" role="img" aria-label="FGV"></i><span>TCC 2026</span></div>
   <div class="wrap">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:14px">
       <div>
-        <div class="chip anim"><b>12 · Entrega</b><i></i><s></s></div>
-        <h2 class="dsp d3 anim">O Projeto<em>Pronto</em></h2>
-        <p class="lead anim" style="max-width:48ch">O sistema de gestão de garantias já implantado e em uso na operação — não uma maquete.</p>
+        <div class="chip anim"><b>12 · Implementação</b><i></i><s></s></div>
+        <h2 class="dsp d3 anim">O Projeto<em>em Implementação</em></h2>
+        <p class="lead anim" style="max-width:52ch">O sistema de gestão de garantias está em <b style="color:var(--blue)">fase final de aprovação e implementação</b> na Center Ônibus.</p>
       </div>
       <button class="anim embtn" id="expandBtn"><svg class="ic"><use href="#i-max"/></svg>Expandir sistema</button>
     </div>
@@ -918,7 +918,7 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
     </div>
     <div class="concl anim" style="margin-top:14px">
       <div class="ring"><svg class="ic"><use href="#i-check"/></svg></div>
-      <div class="concl-t"><span>Da proposta à operação</span><p>Formulário padronizado, registro centralizado, status por ocorrência e indicadores apurados — <b>os três pilares deixaram o papel</b>.</p></div>
+      <div class="concl-t"><span>Status atual</span><p>Formulário padronizado, registro centralizado, status por ocorrência e indicadores apurados — a solução está <b>construída e em validação com a empresa</b>, com implementação em curso.</p></div>
     </div>
   </div>
 </section>
@@ -1138,41 +1138,96 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
 
   /* ---------- animações ---------- */
   if (reduced || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
-  document.documentElement.classList.add('gsap-ready');
-  gsap.registerPlugin(ScrollTrigger);
-  ScrollTrigger.defaults({ scroller: deck });
 
-  secs.forEach(function(sec){
-    var items = sec.querySelectorAll('.anim');
-    if (!items.length) return;
-    gsap.fromTo(items, { opacity: 0, y: 16 }, {
-      opacity: 1, y: 0, duration: .6, ease: 'power2.out', stagger: .05,
-      scrollTrigger: { trigger: sec, start: 'top 62%', once: true }
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* Abaixo de 820px o CSS tira o #deck de container de rolagem e quem rola passa
+     a ser a janela. Apontar o ScrollTrigger para o scroller errado deixaria toda
+     a pagina invisivel, entao o scroller e escolhido conforme o breakpoint. */
+  var deckMQ = window.matchMedia('(min-width: 821px)');
+  var usingDeck = deckMQ.matches;
+
+  /* Mostra tudo sem animar — usado como rede de seguranca */
+  function revealAll(){
+    document.documentElement.classList.remove('gsap-ready');
+    gsap.set('.anim', { clearProps: 'opacity,transform' });
+    document.querySelectorAll('[data-count]').forEach(function(el){
+      var dec = parseInt(el.dataset.dec || '0', 10);
+      el.textContent = parseFloat(el.dataset.count).toFixed(dec).replace('.', ',');
     });
-    var fx = sec.querySelector('.bgfx');
-    if (fx) gsap.fromTo(fx, { opacity: 0 }, { opacity: 1, duration: 1.1, ease: 'power1.out',
-      scrollTrigger: { trigger: sec, start: 'top 75%', once: true } });
-  });
-  document.querySelectorAll('[data-count]').forEach(function(el){
-    var end = parseFloat(el.dataset.count), dec = parseInt(el.dataset.dec || '0', 10), o = { v: 0 };
-    ScrollTrigger.create({ trigger: el, start: 'top 82%', once: true, onEnter: function(){
-      gsap.to(o, { v: end, duration: 1.15, ease: 'power2.out', onUpdate: function(){ el.textContent = o.v.toFixed(dec).replace('.', ','); } });
-    }});
-  });
-  document.querySelectorAll('.donut').forEach(function(svg){
-    var arcs = Array.prototype.slice.call(svg.querySelectorAll('.arc'));
-    arcs.forEach(function(a){ a.style.strokeDasharray = '0 515.2'; });
-    ScrollTrigger.create({ trigger: svg, start: 'top 80%', once: true, onEnter: function(){
-      arcs.forEach(function(a, i){
-        var len = parseFloat(a.dataset.len), o = { v: 0 };
-        gsap.to(o, { v: len, duration: .85, delay: i * .16, ease: 'power2.inOut', onUpdate: function(){ a.style.strokeDasharray = o.v + ' 515.2'; } });
+    document.querySelectorAll('.donut .arc').forEach(function(a){
+      a.style.strokeDasharray = a.dataset.len + ' 515.2';
+    });
+    document.querySelectorAll('[data-grow]').forEach(function(el){ gsap.set(el, { scaleX: 1 }); });
+    document.querySelectorAll('.bgfx').forEach(function(el){ gsap.set(el, { opacity: 1 }); });
+  }
+
+  function build(){
+    secs.forEach(function(sec){
+      var items = sec.querySelectorAll('.anim');
+      if (!items.length) return;
+      gsap.fromTo(items, { opacity: 0, y: 16 }, {
+        opacity: 1, y: 0, duration: .6, ease: 'power2.out', stagger: .05,
+        scrollTrigger: { trigger: sec, start: 'top 62%', once: true }
       });
-    }});
+      var fx = sec.querySelector('.bgfx');
+      if (fx) gsap.fromTo(fx, { opacity: 0 }, { opacity: 1, duration: 1.1, ease: 'power1.out',
+        scrollTrigger: { trigger: sec, start: 'top 75%', once: true } });
+    });
+
+    document.querySelectorAll('[data-count]').forEach(function(el){
+      var end = parseFloat(el.dataset.count), dec = parseInt(el.dataset.dec || '0', 10), o = { v: 0 };
+      ScrollTrigger.create({ trigger: el, start: 'top 82%', once: true, onEnter: function(){
+        gsap.to(o, { v: end, duration: 1.15, ease: 'power2.out',
+          onUpdate: function(){ el.textContent = o.v.toFixed(dec).replace('.', ','); } });
+      }});
+    });
+
+    document.querySelectorAll('.donut').forEach(function(svg){
+      var arcs = Array.prototype.slice.call(svg.querySelectorAll('.arc'));
+      arcs.forEach(function(a){ a.style.strokeDasharray = '0 515.2'; });
+      ScrollTrigger.create({ trigger: svg, start: 'top 80%', once: true, onEnter: function(){
+        arcs.forEach(function(a, i){
+          var len = parseFloat(a.dataset.len), o = { v: 0 };
+          gsap.to(o, { v: len, duration: .85, delay: i * .16, ease: 'power2.inOut',
+            onUpdate: function(){ a.style.strokeDasharray = o.v + ' 515.2'; } });
+        });
+      }});
+    });
+
+    document.querySelectorAll('[data-grow]').forEach(function(el){
+      gsap.fromTo(el, { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: 'power2.out',
+        scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
+    });
+  }
+
+  document.documentElement.classList.add('gsap-ready');
+  ScrollTrigger.defaults({ scroller: usingDeck ? deck : window });
+  build();
+
+  /* As webfonts mudam a altura das secoes depois do primeiro calculo de posicoes */
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function(){ ScrollTrigger.refresh(); });
+  }
+  window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+
+  var rzT;
+  window.addEventListener('resize', function(){
+    clearTimeout(rzT);
+    rzT = setTimeout(function(){
+      if (deckMQ.matches !== usingDeck) { ScrollTrigger.killAll(); revealAll(); }
+      else { ScrollTrigger.refresh(); }
+    }, 220);
   });
-  document.querySelectorAll('[data-grow]').forEach(function(el){
-    gsap.fromTo(el, { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: 'power2.out',
-      scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
-  });
+
+  /* Rede de seguranca: se a primeira secao nao apareceu, mostra tudo sem animacao */
+  setTimeout(function(){
+    var hidden = 0;
+    secs[0].querySelectorAll('.anim').forEach(function(el){
+      if (parseFloat(getComputedStyle(el).opacity) < 0.05) hidden++;
+    });
+    if (hidden) revealAll();
+  }, 2600);
 
 })();
 </script>
