@@ -4,7 +4,6 @@ import {
   Timer, 
   AlertTriangle, 
   CheckSquare, 
-  TrendingUp, 
   TrendingDown,
   ChevronRight,
   HelpCircle,
@@ -35,11 +34,12 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
   );
   const countResolved = resolvedProtocols.length;
   
-  // Calculate Index of Procedence (Approved / Resolved)
+  // Indice de Procedencia — mesmo criterio do TCC: aprovados sobre o TOTAL de ocorrencias
+  // do periodo (nao sobre os resolvidos), para que sistema e trabalho escrito falem o mesmo numero.
   const approvedCount = protocols.filter(p => p.analise_e_status.status_atual === 'Aprovado').length;
-  const indexProcedencia = countResolved > 0 
-    ? parseFloat(((approvedCount / countResolved) * 100).toFixed(1)) 
-    : 87.4;
+  const indexProcedencia = totalProtocols > 0
+    ? parseFloat(((approvedCount / totalProtocols) * 100).toFixed(1))
+    : 0;
 
   const countEmAnalise = protocols.filter(p => p.analise_e_status.status_atual === 'Em Análise').length;
   const percentEmAnalise = countActive > 0
@@ -169,9 +169,9 @@ export default function Dashboard({ protocols, onSelectProtocol, onOpenNewForm }
               <CheckCircle2 size={18} />
             </div>
           </div>
-          <div className="flex items-center gap-1 font-sans text-xs font-semibold text-emerald-600">
-            <TrendingUp size={14} />
-            <span>+2.1% este mês</span>
+          <div className="flex items-center gap-1.5 font-sans text-xs font-semibold text-slate-500">
+            <CheckCircle2 size={14} />
+            <span>{approvedCount} de {totalProtocols} ocorrências do período</span>
           </div>
         </div>
 
