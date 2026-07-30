@@ -598,7 +598,7 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
         </div>
       </div>
       <div class="stat anim">
-        <div class="v">R$ <span data-count="3.6" data-dec="1">0,0</span></div>
+        <div class="v">R$ <span data-count="3.6" data-dec="1">3,6</span></div>
         <div class="l">milhões · faturamento mensal</div>
         <div class="tline" style="justify-content:flex-start">
           <span style="color:var(--muted);font-weight:500;font-size:clamp(11px,.88vw,13.5px);line-height:1.5;text-align:left">Nessa escala, um processo de garantias informal deixa de ser detalhe operacional e passa a ser <b style="color:var(--navy)">risco de governança</b>.</span>
@@ -656,7 +656,7 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
       </div>
       <div>
         <div class="stat anim">
-          <div class="v"><span data-count="31">0</span></div>
+          <div class="v"><span data-count="31">31</span></div>
           <div class="l">ocorrências reais analisadas</div>
           <div class="tline"><span>Ago / 2025</span><span class="track"><i data-grow></i></span><span>Fev / 2026</span></div>
         </div>
@@ -1239,8 +1239,11 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
     document.querySelectorAll('[data-count]').forEach(function(el){
       var end = parseFloat(el.dataset.count), dec = parseInt(el.dataset.dec || '0', 10), o = { v: 0 };
       ScrollTrigger.create({ trigger: el, start: 'top 82%', once: true, onEnter: function(){
+        /* zera so na hora de animar: se o GSAP nunca rodar, o valor real ja esta no HTML */
+        el.textContent = (0).toFixed(dec).replace('.', ',');
         gsap.to(o, { v: end, duration: 1.15, ease: 'power2.out',
-          onUpdate: function(){ el.textContent = o.v.toFixed(dec).replace('.', ','); } });
+          onUpdate: function(){ el.textContent = o.v.toFixed(dec).replace('.', ','); },
+          onComplete: function(){ el.textContent = end.toFixed(dec).replace('.', ','); } });
       }});
     });
 
@@ -1281,7 +1284,7 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
     }, 220);
   });
 
-  /* Rede de seguranca: se a primeira secao nao apareceu, mostra tudo sem animacao */
+  /* Rede de seguranca 1: se a capa nao apareceu, mostra tudo sem animacao */
   setTimeout(function(){
     var hidden = 0;
     secs[0].querySelectorAll('.anim').forEach(function(el){
@@ -1289,6 +1292,36 @@ body.embed-open .fgvmark,body.embed-open #dots,body.embed-open #hud,body.embed-o
     });
     if (hidden) revealAll();
   }, 2600);
+
+  /* Rede de seguranca 2: qualquer secao que entre em tela e nao anime em 1,5s
+     tem o conteudo revelado na marra — nenhuma secao pode ficar em branco */
+  if ('IntersectionObserver' in window) {
+    var guard = new IntersectionObserver(function(en){
+      en.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var sec = e.target;
+        setTimeout(function(){
+          var stuck = [];
+          sec.querySelectorAll('.anim').forEach(function(el){
+            if (parseFloat(getComputedStyle(el).opacity) < 0.05) stuck.push(el);
+          });
+          if (stuck.length) {
+            gsap.set(stuck, { clearProps: 'opacity,transform' });
+            sec.querySelectorAll('[data-count]').forEach(function(el){
+              var dec = parseInt(el.dataset.dec || '0', 10);
+              el.textContent = parseFloat(el.dataset.count).toFixed(dec).replace('.', ',');
+            });
+            sec.querySelectorAll('.donut .arc').forEach(function(a){
+              a.style.strokeDasharray = a.dataset.len + ' 515.2';
+            });
+            var fx = sec.querySelector('.bgfx');
+            if (fx) gsap.set(fx, { opacity: 1 });
+          }
+        }, 1500);
+      });
+    }, { root: usingDeck ? deck : null, threshold: 0.35 });
+    secs.forEach(function(s){ guard.observe(s); });
+  }
 
 })();
 </script>
